@@ -8,7 +8,7 @@
     {
       "binding": "DB",
       "database_name": "secret-santa-db",
-      "database_id": "0497b371-0a4f-4114-a464-cfc7197d5668",
+      "database_id": "<DATABASE_ID>",
       "migrations_dir": "migrations"
     }
   ]
