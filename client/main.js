@@ -26,6 +26,7 @@ Vue.component('member', {
         }
     }
 });
+const backendUrl = 'https://secret-santa-api.arxalex.com/';
 var app = new Vue({
     el: '#page-wrapper',
     data: {
@@ -67,7 +68,7 @@ var app = new Vue({
     },
     methods: {
         getSession: function (id, pass) {
-            return axios.post('get.php', {
+            return axios.post(backendUrl + 'get', {
                 table: 'ss_sessions',
                 query: {
                     id: id,
@@ -82,7 +83,7 @@ var app = new Vue({
             });
         },
         getMember: function (id, pass) {
-            return axios.post('get.php', {
+            return axios.post(backendUrl + 'get', {
                 table: 'ss_members',
                 query: {
                     id: id,
@@ -97,7 +98,7 @@ var app = new Vue({
             });
         },
         getLinks: function () {
-            return axios.post('get.php', {
+            return axios.post(backendUrl + 'get', {
                 table: 'ss_link',
                 query: {
                     id: this.sessionData.id,
@@ -112,7 +113,7 @@ var app = new Vue({
             });
         },
         getRandom: function () {
-            return axios.post('get.php', {
+            return axios.post(backendUrl + 'get', {
                 table: 'ss_random',
                 query: {
                     id: this.member.id,
@@ -128,7 +129,7 @@ var app = new Vue({
             });
         },
         createSession: function () {
-            return axios.post('create.php', {
+            return axios.post(backendUrl + 'create', {
                 table: 'ss_sessions',
                 query: {
                     'id': 'DEFAULT',
@@ -140,7 +141,7 @@ var app = new Vue({
             });
         },
         createMember: function () {
-            return axios.post('create.php', {
+            return axios.post(backendUrl + 'create', {
                 table: 'ss_members',
                 query: {
                     'id': 'DEFAULT',
@@ -157,7 +158,7 @@ var app = new Vue({
             });
         },
         createLink: function () {
-            return axios.post('create.php', {
+            return axios.post(backendUrl + 'create', {
                 table: 'ss_link',
                 query: {
                     'id': this.sessionData.id,
@@ -175,7 +176,7 @@ var app = new Vue({
             this.links.forEach(link => {
                 rids.push(link.memberid);
             });
-            return axios.post('create.php', {
+            return axios.post(backendUrl + 'create', {
                 table: 'ss_random',
                 query: {
                     'id': '',
@@ -191,7 +192,7 @@ var app = new Vue({
             });
         },
         saveSession() {
-            axios.post('update.php', {
+            axios.post(backendUrl + 'update', {
                 table: 'ss_sessions',
                 query: {
                     'id': this.sessionData.id,
@@ -205,7 +206,7 @@ var app = new Vue({
             });
         },
         saveMember() {
-            axios.post('update.php', {
+            axios.post(backendUrl + 'update', {
                 table: 'ss_members',
                 query: {
                     'id': this.member.id,
@@ -240,7 +241,7 @@ var app = new Vue({
             localStorage.setItem('member', parsed);
         },
         deleteLink(linkid) {
-            return axios.post('delete.php', {
+            return axios.post(backendUrl + 'delete', {
                 table: 'ss_link',
                 query: {
                     id: this.sessionData.id,
