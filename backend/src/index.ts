@@ -11,7 +11,7 @@ type Bindings = {
 const app = new Hono<{ Bindings: Bindings }>()
 
 app.use('/*', cors({
-  origin: ['https://apps.arxalex.com/', 'https://apps2.arxalex.com/'],
+  origin: ['https://apps.arxalex.com', 'https://apps2.arxalex.com'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
 }))
 
