@@ -147,9 +147,9 @@ app.post('/random', async (c) => {
         })
     } while (pairs.some(([a, b]) => a === b))
 
-    const ids = data.randids.join(',')
+    const ids = data.randids.map(id => '?').join(',')
     const query = `select * from ${tables.members} where id in (${ids})`
-    const membersResult = await c.env.DB.prepare(query).run<Member>();
+    const membersResult = await c.env.DB.prepare(query).bind(...data.randids).run();
     if (!membersResult.success) {
         return c.json({error: 'Query not specified'}, 404)
     }
@@ -158,17 +158,19 @@ app.post('/random', async (c) => {
         return c.json({error: 'Query not specified'}, 404)
     }
     let query2 = `insert into ${tables.random} (id, pass, sessionid, memberid, data) values  `;
+    let params = [];
     for (const [giver, receiver] of pairs) {
         const memberData = membersData.find(d => d.id === receiver);
-        if (!memberData) continue
-        memberData.pass = undefined;
-        const giverpass = membersData.find(d => d.id === giver);
-        if (!giverpass) continue
-        query2 += `(${giver}, ${giverpass}, ${data.sessionid}, ${receiver}, ${JSON.stringify(memberData)}), `
+        const giverMember = membersData.find(d => d.id === giver);
+        if (!memberData || !giverMember || !giverMember.pass) continue;
+        const cleanMemberData = { ...memberData };
+        delete cleanMemberData.pass;
+        params.push(giver, giverMember.pass, data.sessionid, receiver, JSON.stringify(cleanMemberData)).toString()
+        query2 += `(?, ?, ?, ?, ?), `
     }
     query2 = query2.slice(0, -2);
 
-    const result = await c.env.DB.prepare(query2).run();
+    const result = await c.env.DB.prepare(query2).bind(...params).run();
 
     return c.json({success: result.success})
 })
