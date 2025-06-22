@@ -186,9 +186,7 @@ var app = new Vue({
                 wants: this.member.wants,
             }).then((response) => {
                 if (response.data.response) {
-                    console.log(this.memberinlink);
                     if (this.memberinlink !== false) {
-                        console.log(this.memberinlink);
                         this.deleteLink(this.links[this.memberinlink].linkid);
                         this.join();
                     }
