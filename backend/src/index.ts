@@ -26,7 +26,7 @@ app.use('/*', cors({
 
 app.get('/session', async (c) => {
     const idPass = c.req.param('idpass');
-    if (!idPass || idPass.length <= 7) {
+    if (!idPass || idPass.length <= 6) {
         return c.json({error: 'Query not specified'}, 404)
     }
     const id = idPass.slice(0, -6);
@@ -41,7 +41,7 @@ app.get('/session', async (c) => {
 })
 app.get('/member', async (c) => {
     const idPass = c.req.param('idpass');
-    if (!idPass || idPass.length <= 7) {
+    if (!idPass || idPass.length <= 6) {
         return c.json({error: 'Query not specified'}, 404)
     }
     const id = idPass.slice(0, -6);
@@ -56,7 +56,7 @@ app.get('/member', async (c) => {
 })
 app.get('/links', async (c) => {
     const idPass = c.req.param('idpass');
-    if (!idPass || idPass.length <= 7) {
+    if (!idPass || idPass.length <= 6) {
         return c.json({error: 'Query not specified'}, 404)
     }
     const id = idPass.slice(0, -6);
@@ -72,7 +72,7 @@ app.get('/links', async (c) => {
 app.get('/random', async (c) => {
     const idPass = c.req.param('idpass');
     const sessionId = c.req.param('sessionId');
-    if (!idPass || idPass.length <= 7 || !sessionId) {
+    if (!idPass || idPass.length <= 6 || !sessionId) {
         return c.json({error: 'Query not specified'}, 404)
     }
     const id = idPass.slice(0, -6);
