@@ -232,9 +232,9 @@ var app = new Vue({
         get: function (teamid) {
             this.getSession(teamid.slice(0, -6), teamid.slice(-6)).then((data) => {
                 if (data != false) {
-                    this.sessionData.id = data[0].id;
-                    this.sessionData.pass = data[0].pass;
-                    this.sessionData.data = JSON.parse(data[0].data);
+                    this.sessionData.id = data.id;
+                    this.sessionData.pass = data.pass;
+                    this.sessionData.data = JSON.parse(data.data);
                     this.login = true;
                     this.incorrect = false;
                     this.saveSessionlocal();
@@ -243,7 +243,7 @@ var app = new Vue({
                     });
                     this.getRandom().then((ddata) => {
                         if (ddata != false) {
-                            dddata = JSON.parse(ddata[0].data);
+                            dddata = JSON.parse(ddata.data);
                             this.dreamer.email = dddata.email;
                             this.dreamer.phone = dddata.phone;
                             this.dreamer.first_name = dddata.first_name;
@@ -272,14 +272,14 @@ var app = new Vue({
         getM: function (memberid) {
             this.getSession(memberid.slice(0, -6), memberid.slice(-6)).then((data) => {
                 if (data != false) {
-                    this.member.id = data[0].id;
-                    this.member.pass = data[0].pass;
-                    this.member.email = data[0].email;
-                    this.member.phone = data[0].phone;
-                    this.member.first_name = data[0].first_name;
-                    this.member.last_name = data[0].last_name;
-                    this.member.address = data[0].address;
-                    this.member.wants = data[0].wants;
+                    this.member.id = data.id;
+                    this.member.pass = data.pass;
+                    this.member.email = data.email;
+                    this.member.phone = data.phone;
+                    this.member.first_name = data.first_name;
+                    this.member.last_name = data.last_name;
+                    this.member.address = data.address;
+                    this.member.wants = data.wants;
                     this.saveSessionlocal();
                 } else {
 
@@ -412,7 +412,6 @@ function generateRandomString(length) {
 }
 function getParams() {
     queryString = window.location.search;
-    //console.log(queryString);
     urlParams = new URLSearchParams(queryString);
     return {
         teamid: urlParams.get('teamid'),
