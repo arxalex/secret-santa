@@ -1,199 +1,217 @@
-import { Hono } from 'hono'
-import { cors } from 'hono/cors'
-import { D1Database } from '@cloudflare/workers-types'
-import { Request } from './request.model'
-import { getMemberData, hasDuplicate, mysqlEscape } from "./helper";
+import {Hono} from 'hono'
+import {cors} from 'hono/cors'
+import {D1Database} from '@cloudflare/workers-types'
+import {Session} from "./session.model";
+import {Member} from "./member.model";
+import {Link} from "./link.model";
+import {RandomRequest} from "./random-request.model";
 
 type Bindings = {
-  DB: D1Database
+    DB: D1Database
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
 
+const tables = {
+    sessions: 'ss_sessions',
+    members: 'ss_members',
+    links: 'ss_link',
+    random: 'ss_random'
+}
+
 app.use('/*', cors({
-  origin: ['https://apps.arxalex.com', 'https://apps2.arxalex.com'],
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
+    origin: ['https://apps.arxalex.com', 'https://apps2.arxalex.com'],
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
 }))
 
-app.post('/create', async (c) => {
-  const data = await c.req.json<Request>()
+app.get('/session', async (c) => {
+    const idPass = c.req.param('idpass');
+    if (!idPass || idPass.length <= 7) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+    const id = idPass.slice(0, -6);
+    const pass = idPass.slice(-6);
 
-  if (!data.table) {
-    return c.json({ error: 'Table not specified' }, 404)
-  }
+    const query = `select *
+                   from ${tables.sessions}
+                   where id = ?
+                     and pass = ?`;
+    const result = await c.env.DB.prepare(query).bind(id, pass).run();
+    return c.json(result.results[0])
+})
+app.get('/member', async (c) => {
+    const idPass = c.req.param('idpass');
+    if (!idPass || idPass.length <= 7) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+    const id = idPass.slice(0, -6);
+    const pass = idPass.slice(-6);
 
-  const ignore: Record<string, string[]> = {
-    'ss_link': ['pass', 'linkid', 'name'],
-    'ss_members': ['id'],
-    'ss_sessions': [],
-    'ss_random': ['randomid', 'data', 'pass']
-  }
+    const query = `select *
+                   from ${tables.members}
+                   where id = ?
+                     and pass = ?`;
+    const result = await c.env.DB.prepare(query).bind(id, pass).run();
+    return c.json(result.results[0])
+})
+app.get('/links', async (c) => {
+    const idPass = c.req.param('idpass');
+    if (!idPass || idPass.length <= 7) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+    const id = idPass.slice(0, -6);
+    const pass = idPass.slice(-6);
 
-  if (data.table === 'ss_random' && data.randids) {
+    const query = `select *
+                   from ${tables.links}
+                   where id = ?
+                     and pass = ?`;
+    const result = await c.env.DB.prepare(query).bind(id, pass).run();
+    return c.json(result.results)
+})
+app.get('/random', async (c) => {
+    const idPass = c.req.param('idpass');
+    const sessionId = c.req.param('sessionId');
+    if (!idPass || idPass.length <= 7 || !sessionId) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+    const id = idPass.slice(0, -6);
+    const pass = idPass.slice(-6);
+
+    const query = `select *
+                   from ${tables.random}
+                   where id = ?
+                     and pass = ?
+                     and sessionid = ?`;
+    const result = await c.env.DB.prepare(query).bind(id, pass, sessionId).run();
+    return c.json(result.results[0])
+})
+app.post('/session', async (c) => {
+    const data = await c.req.json<Session>();
+    if (!data || !data.pass || data.pass.length !== 6) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+
+    const query = `insert into ${tables.sessions} (pass, data)
+                   values (?, ?)`;
+    const result = await c.env.DB.prepare(query).bind(data.pass, data.data).run();
+    return c.json({
+        id: result.meta.lastRowId,
+        pass: data.pass,
+        response: result.success
+    })
+})
+app.post('/member', async (c) => {
+    const data = await c.req.json<Member>();
+    if (!data || !data.pass || data.pass.length !== 6) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+
+    const query = `insert into ${tables.members} (pass, email, phone, first_name, last_name, address, wants)
+                   values (?, ?, ?, ?, ?, ?, ?)`;
+    const result = await c.env.DB.prepare(query).bind(data.pass, data.email, data.phone, data.first_name, data.last_name, data.address, data.wants).run();
+    return c.json({
+        id: result.meta.lastRowId,
+        pass: data.pass,
+        response: result.success
+    })
+})
+app.post('/link', async (c) => {
+    const data = await c.req.json<Link>();
+    if (!data || !data.pass || data.pass.length !== 6) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+
+    const query = `insert into ${tables.links} (id, pass, memberid, name)
+                   values (?, ?, ?, ?)`;
+    const result = await c.env.DB.prepare(query).bind(data.id, data.pass, data.memberid, data.name).run();
+    return c.json({
+        id: result.meta.lastRowId,
+        pass: data.pass,
+        response: result.success
+    })
+})
+app.post('/random', async (c) => {
+    const data = await c.req.json<RandomRequest>();
+    if (!data.sessionid && !data.randids) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
     const members = data.randids
     let pairs: number[][] = []
 
     do {
-      const available = [...members]
-      pairs = members.map(id => {
-        const possibleMatches = available.filter(x => x !== id)
-        const idx = Math.floor(Math.random() * possibleMatches.length)
-        const match = possibleMatches[idx]
-        available.splice(available.indexOf(match), 1)
-        return [id, match]
-      })
+        const available = [...members]
+        pairs = members.map(id => {
+            const possibleMatches = available.filter(x => x !== id)
+            const idx = Math.floor(Math.random() * possibleMatches.length)
+            const match = possibleMatches[idx]
+            available.splice(available.indexOf(match), 1)
+            return [id, match]
+        })
     } while (pairs.some(([a, b]) => a === b))
 
-
+    const ids = data.randids.join(',')
+    const query = `select * from ${tables.members} where id in (${ids})`
+    const membersResult = await c.env.DB.prepare(query).run<Member>();
+    if (!membersResult.success) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+    const membersData = membersResult.results;
+    if (!pairs || !pairs.length) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
+    let query2 = `insert into ${tables.random} (id, pass, sessionid, memberid, data) values  `;
     for (const [giver, receiver] of pairs) {
-      const memberData = await getMemberData(receiver, c.env.DB)
-      if (!memberData) continue
+        const memberData = membersData.find(d => d.id === receiver);
+        if (!memberData) continue
+        memberData.pass = undefined;
+        const giverpass = membersData.find(d => d.id === giver);
+        if (!giverpass) continue
+        query2 += `(${giver}, ${giverpass}, ${data.sessionid}, ${receiver}, ${JSON.stringify(memberData)}), `
+    }
+    query2 = query2.slice(0, -2);
 
-      await c.env.DB.prepare(`
-        INSERT INTO ss_random (id, sessionid, memberid, data) 
-        VALUES (?, ?, ?, ?)
-      `).bind(
-        giver,
-        data.query.sessionid,
-        receiver,
-        JSON.stringify(memberData)
-      ).run()
+    const result = await c.env.DB.prepare(query2).run();
+
+    return c.json({success: result.success})
+})
+app.post('/session/update', async (c) => {
+    const data = await c.req.json<Session>();
+    if (!data || !data.id || data.id <= 0 || !data.pass || data.pass.length !== 6) {
+        return c.json({error: 'Query not specified'}, 404)
     }
 
-    return c.json({ success: true })
-  }
-
-  const isDuplicate = await hasDuplicate(data, ignore[data.table] || [], c.env.DB)
-  if (isDuplicate) {
-    return c.json({ response: false })
-  }
-
-  const fields = Object.keys(data.query).map(k => mysqlEscape(k)).join(', ')
-  const placeholders = Object.keys(data.query).map(() => '?').join(', ')
-  const values = Object.values(data.query)
-
-  const result = await c.env.DB.prepare(`
-    INSERT INTO ${mysqlEscape(data.table)} (${fields}) 
-    VALUES (${placeholders})
-  `).bind(...values).run()
-
-  return c.json({
-    id: result.meta.lastRowId,
-    pass: data.query.pass,
-    response: true
-  })
+    const query = `update ${tables.sessions} set data = ? where id = ? and pass = ?`;
+    const result = await c.env.DB.prepare(query).bind(data.data, data.id, data.pass).run();
+    return c.json({
+        response: result.success
+    })
 })
+app.post('/member/update', async (c) => {
+    const data = await c.req.json<Member>();
+    if (!data || !data.id || data.id <= 0 || !data.pass || data.pass.length !== 6) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
 
-
-app.post('/update', async (c) => {
-  const data = await c.req.json<Request>()
-
-  if (!data.table) {
-    return c.json({ error: 'Table not specified' }, 404)
-  }
-
-  if (!data.query) {
-    return c.json({ error: 'Query not specified' }, 404)
-  }
-
-  const updates = Object.entries(data.query)
-      .filter(([key]) => key !== 'id' && key !== 'pass')
-      .map(([key]) => `${mysqlEscape(key)} = ?`)
-      .join(', ')
-
-  const values = [
-    ...Object.entries(data.query)
-        .filter(([key]) => key !== 'id' && key !== 'pass')
-        .map(([_, value]) => value),
-    data.query.id,
-    data.query.pass
-  ]
-
-  const query = `
-    UPDATE ${mysqlEscape(data.table)}
-    SET ${updates}
-    WHERE id = ? AND pass = ?
-  `
-
-  const result = await c.env.DB.prepare(query).bind(...values).run()
-
-  return c.json({
-    response: result.success
-  })
+    const query = `update ${tables.members} set email = ?, phone = ?, first_name = ?, last_name = ?, address = ?, wants = ? where id = ? and pass = ?`;
+    const result = await c.env.DB.prepare(query).bind(data.email, data.phone, data.first_name, data.last_name, data.address, data.wants, data.id, data.pass).run();
+    return c.json({
+        response: result.success
+    })
 })
+app.delete('/link', async (c) => {
+    const data = await c.req.json<Link>();
+    if (!data || !data.pass || data.pass.length !== 6) {
+        return c.json({error: 'Query not specified'}, 404)
+    }
 
-app.post('/get', async (c) => {
-  const data = await c.req.json<Request>()
-
-  if (!data.table) {
-    return c.json({ error: 'Table not specified' }, 404)
-  }
-
-  if (!data.query) {
-    return c.json({ error: 'Query not specified' }, 404)
-  }
-
-  const baseConditions = [`id = ?`, `pass = ?`]
-  const additionalConditions = Object.entries(data.query)
-    .filter(([key]) => key !== 'id' && key !== 'pass')
-    .map(([key]) => `${mysqlEscape(key)} = ?`)
-
-  const conditions = [...baseConditions, ...additionalConditions].join(' AND ')
-
-  const values = [
-    data.query.id,
-    data.query.pass,
-    ...Object.entries(data.query)
-      .filter(([key]) => key !== 'id' && key !== 'pass')
-      .map(([_, value]) => value)
-  ]
-
-  const query = `
-    SELECT * FROM ${mysqlEscape(data.table)}
-    WHERE ${conditions}
-    ORDER BY id DESC
-  `
-
-  const result = await c.env.DB.prepare(query).bind(...values).all()
-  return c.json(result.results)
-})
-
-app.post('/delete', async (c) => {
-  const data = await c.req.json<Request>()
-
-  if (!data.table) {
-    return c.json({ error: 'Table not specified' }, 404)
-  }
-
-  if (!data.query) {
-    return c.json({ error: 'Query not specified' }, 404)
-  }
-
-  const baseConditions = [`id = ?`, `pass = ?`]
-  const additionalConditions = Object.entries(data.query)
-    .filter(([key]) => key !== 'id' && key !== 'pass')
-    .map(([key]) => `${mysqlEscape(key)} = ?`)
-
-  const conditions = [...baseConditions, ...additionalConditions].join(' AND ')
-
-  const values = [
-    data.query.id,
-    data.query.pass,
-    ...Object.entries(data.query)
-      .filter(([key]) => key !== 'id' && key !== 'pass')
-      .map(([_, value]) => value)
-  ]
-
-  const query = `
-    DELETE FROM ${mysqlEscape(data.table)}
-    WHERE ${conditions}
-  `
-
-  const result = await c.env.DB.prepare(query).bind(...values).run()
-
-  return c.json({
-    response: result.success
-  })
+    const query = `delete from ${tables.links} where id = ? and pass = ? and linkid = ?`;
+    const result = await c.env.DB.prepare(query).bind(data.id, data.pass, data.linkid).run();
+    return c.json({
+        id: result.meta.lastRowId,
+        pass: data.pass,
+        response: result.success
+    })
 })
 
 export default app
