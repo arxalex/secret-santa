@@ -68,8 +68,7 @@ var app = new Vue({
     },
     methods: {
         getSession: function (id, pass) {
-            return axios.get({
-                baseURL: backendUrl + 'session',
+            return axios.get(backendUrl + 'session', {
                 params: {
                     'idpass': id + pass
                 }
@@ -82,8 +81,7 @@ var app = new Vue({
             });
         },
         getMember: function (id, pass) {
-            return axios.get({
-                baseURL: backendUrl + 'member',
+            return axios.get(backendUrl + 'member', {
                 params: {
                     'idpass': id + pass
                 }
@@ -96,8 +94,7 @@ var app = new Vue({
             });
         },
         getLinks: function () {
-            return axios.get({
-                baseURL: backendUrl + 'links',
+            return axios.get(backendUrl + 'links', {
                 params: {
                     'idpass': this.sessionData.id + this.sessionData.pass
                 }
@@ -110,8 +107,7 @@ var app = new Vue({
             });
         },
         getRandom: function () {
-            return axios.get({
-                baseURL: backendUrl + 'random',
+            return axios.get(backendUrl + 'random', {
                 params: {
                     'idpass': this.member.id + this.member.pass,
                     'sessionId': this.sessionData.id
