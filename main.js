@@ -73,7 +73,7 @@ var app = new Vue({
                     'idpass': id + pass
                 }
             }).then((response) => {
-                if (response.data > 0) {
+                if (response.data) {
                     return response.data;
                 } else {
                     return false;
