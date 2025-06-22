@@ -68,11 +68,10 @@ var app = new Vue({
     },
     methods: {
         getSession: function (id, pass) {
-            return axios.post(backendUrl + 'get', {
-                table: 'ss_sessions',
-                query: {
-                    id: id,
-                    pass: pass
+            return axios.get({
+                baseURL: backendUrl + 'session',
+                params: {
+                    'idpass': id + pass
                 }
             }).then((response) => {
                 if (response.data.length > 0) {
@@ -83,11 +82,10 @@ var app = new Vue({
             });
         },
         getMember: function (id, pass) {
-            return axios.post(backendUrl + 'get', {
-                table: 'ss_members',
-                query: {
-                    id: id,
-                    pass: pass
+            return axios.get({
+                baseURL: backendUrl + 'member',
+                params: {
+                    'idpass': id + pass
                 }
             }).then((response) => {
                 if (response.data.length > 0) {
@@ -98,11 +96,10 @@ var app = new Vue({
             });
         },
         getLinks: function () {
-            return axios.post(backendUrl + 'get', {
-                table: 'ss_link',
-                query: {
-                    id: this.sessionData.id,
-                    pass: this.sessionData.pass
+            return axios.get({
+                baseURL: backendUrl + 'links',
+                params: {
+                    'idpass': this.sessionData.id + this.sessionData.pass
                 }
             }).then((response) => {
                 if (response.data.length > 0) {
@@ -113,12 +110,11 @@ var app = new Vue({
             });
         },
         getRandom: function () {
-            return axios.post(backendUrl + 'get', {
-                table: 'ss_random',
-                query: {
-                    id: this.member.id,
-                    pass: this.member.pass,
-                    sessionid: this.sessionData.id
+            return axios.get({
+                baseURL: backendUrl + 'random',
+                params: {
+                    'idpass': this.member.id + this.member.pass,
+                    'sessionId': this.sessionData.id
                 }
             }).then((response) => {
                 if (response.data.length > 0) {
@@ -129,44 +125,32 @@ var app = new Vue({
             });
         },
         createSession: function () {
-            return axios.post(backendUrl + 'create', {
-                table: 'ss_sessions',
-                query: {
-                    'id': 'DEFAULT',
-                    'pass': generateRandomString(6),
-                    'data': JSON.stringify(this.sessionData.data),
-                },
+            return axios.post(backendUrl + 'session', {
+                pass: generateRandomString(6),
+                data: JSON.stringify(this.sessionData.data),
             }).then((response) => {
                 return response.data;
             });
         },
         createMember: function () {
-            return axios.post(backendUrl + 'create', {
-                table: 'ss_members',
-                query: {
-                    'id': 'DEFAULT',
-                    'pass': generateRandomString(6),
-                    'email': this.member.email,
-                    'phone': this.member.phone,
-                    'first_name': this.member.first_name,
-                    'last_name': this.member.last_name,
-                    'address': this.member.address,
-                    'wants': this.member.wants,
-                },
+            return axios.post(backendUrl + 'member', {
+                pass: generateRandomString(6),
+                email: this.member.email,
+                phone: this.member.phone,
+                first_name: this.member.first_name,
+                last_name: this.member.last_name,
+                address: this.member.address,
+                wants: this.member.wants,
             }).then((response) => {
                 return response.data;
             });
         },
         createLink: function () {
-            return axios.post(backendUrl + 'create', {
-                table: 'ss_link',
-                query: {
-                    'id': this.sessionData.id,
-                    'pass': this.sessionData.pass,
-                    'memberid': this.member.id,
-                    'linkid': 'DEFAULT',
-                    'name': this.member.first_name
-                },
+            return axios.post(backendUrl + 'link', {
+                id: this.sessionData.id,
+                pass: this.sessionData.pass,
+                memberid: this.member.id,
+                name: this.member.first_name
             }).then((response) => {
                 return response.data;
             });
@@ -176,29 +160,18 @@ var app = new Vue({
             this.links.forEach(link => {
                 rids.push(link.memberid);
             });
-            return axios.post(backendUrl + 'create', {
-                table: 'ss_random',
-                query: {
-                    'id': '',
-                    'pass': '',
-                    'sessionid': this.sessionData.id,
-                    'memberid': '',
-                    'data': '',
-                    'randomid': 'DEFAULT',
-                },
+            return axios.post(backendUrl + 'random', {
+                sessionid: this.sessionData.id,
                 randids: rids,
             }).then((response) => {
                 return response.data;
             });
         },
         saveSession() {
-            axios.post(backendUrl + 'update', {
-                table: 'ss_sessions',
-                query: {
-                    'id': this.sessionData.id,
-                    'pass': this.sessionData.pass,
-                    'data': JSON.stringify(this.sessionData.data)
-                },
+            axios.post(backendUrl + 'session/update', {
+                id: this.sessionData.id,
+                pass: this.sessionData.pass,
+                data: JSON.stringify(this.sessionData.data)
             }).then((response) => {
                 if (response.data.response) {
                     this.saveSessionlocal();
@@ -206,18 +179,15 @@ var app = new Vue({
             });
         },
         saveMember() {
-            axios.post(backendUrl + 'update', {
-                table: 'ss_members',
-                query: {
-                    'id': this.member.id,
-                    'pass': this.member.pass,
-                    'email': this.member.email,
-                    'phone': this.member.phone,
-                    'first_name': this.member.first_name,
-                    'last_name': this.member.last_name,
-                    'address': this.member.address,
-                    'wants': this.member.wants,
-                },
+            axios.post(backendUrl + 'member/update', {
+                id: this.member.id,
+                pass: this.member.pass,
+                email: this.member.email,
+                phone: this.member.phone,
+                first_name: this.member.first_name,
+                last_name: this.member.last_name,
+                address: this.member.address,
+                wants: this.member.wants,
             }).then((response) => {
                 if (response.data.response) {
                     console.log(this.memberinlink);
@@ -241,13 +211,10 @@ var app = new Vue({
             localStorage.setItem('member', parsed);
         },
         deleteLink(linkid) {
-            return axios.post(backendUrl + 'delete', {
-                table: 'ss_link',
-                query: {
-                    id: this.sessionData.id,
-                    pass: this.sessionData.pass,
-                    linkid: linkid
-                }
+            return axios.delete(backendUrl + 'link', {
+                id: this.sessionData.id,
+                pass: this.sessionData.pass,
+                linkid: linkid
             }).then((response) => {
                 return response.data.response;
             });
