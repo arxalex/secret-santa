@@ -73,7 +73,7 @@ var app = new Vue({
                     'idpass': id + pass
                 }
             }).then((response) => {
-                if (response.data.length > 0) {
+                if (response.data > 0) {
                     return response.data;
                 } else {
                     return false;
@@ -86,7 +86,7 @@ var app = new Vue({
                     'idpass': id + pass
                 }
             }).then((response) => {
-                if (response.data.length > 0) {
+                if (response.data > 0) {
                     return response.data;
                 } else {
                     return false;
@@ -99,7 +99,7 @@ var app = new Vue({
                     'idpass': this.sessionData.id + this.sessionData.pass
                 }
             }).then((response) => {
-                if (response.data.length > 0) {
+                if (response.data > 0) {
                     return response.data;
                 } else {
                     return false;
@@ -113,7 +113,7 @@ var app = new Vue({
                     'sessionId': this.sessionData.id
                 }
             }).then((response) => {
-                if (response.data.length > 0) {
+                if (response.data > 0) {
                     return response.data;
                 } else {
                     return false;
