@@ -196,7 +196,7 @@ app.post('/member/update', async (c) => {
         response: result.success
     })
 })
-app.delete('/link', async (c) => {
+app.post('/link/delete', async (c) => {
     const data = await c.req.json<Link>();
     if (!data || !data.pass || data.pass.length !== 6) {
         return c.json({error: 'Query not specified'}, 404)
