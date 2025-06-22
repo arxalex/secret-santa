@@ -92,11 +92,10 @@ app.post('/session', async (c) => {
         return c.json({error: 'Query not specified'}, 404)
     }
 
-    const query = `insert into ${tables.sessions} (pass, data)
-                   values (?, ?)`;
+    const query = `insert into ${tables.sessions} (pass, data) values (?, ?) RETURNING id`;
     const result = await c.env.DB.prepare(query).bind(data.pass, data.data).run();
     return c.json({
-        id: result.meta.lastRowId,
+        id: result.results[0].id,
         pass: data.pass,
         response: result.success
     })
@@ -107,11 +106,10 @@ app.post('/member', async (c) => {
         return c.json({error: 'Query not specified'}, 404)
     }
 
-    const query = `insert into ${tables.members} (pass, email, phone, first_name, last_name, address, wants)
-                   values (?, ?, ?, ?, ?, ?, ?)`;
+    const query = `insert into ${tables.members} (pass, email, phone, first_name, last_name, address, wants) values (?, ?, ?, ?, ?, ?, ?) RETURNING id`;
     const result = await c.env.DB.prepare(query).bind(data.pass, data.email, data.phone, data.first_name, data.last_name, data.address, data.wants).run();
     return c.json({
-        id: result.meta.lastRowId,
+        id: result.results[0].id,
         pass: data.pass,
         response: result.success
     })
@@ -122,11 +120,10 @@ app.post('/link', async (c) => {
         return c.json({error: 'Query not specified'}, 404)
     }
 
-    const query = `insert into ${tables.links} (id, pass, memberid, name)
-                   values (?, ?, ?, ?)`;
+    const query = `insert into ${tables.links} (id, pass, memberid, name) values (?, ?, ?, ?) RETURNING linkid`;
     const result = await c.env.DB.prepare(query).bind(data.id, data.pass, data.memberid, data.name).run();
     return c.json({
-        id: result.meta.lastRowId,
+        id: result.results[0].linkid,
         pass: data.pass,
         response: result.success
     })
