@@ -207,7 +207,7 @@ var app = new Vue({
             localStorage.setItem('member', parsed);
         },
         deleteLink(linkid) {
-            return axios.delete(backendUrl + 'link', {
+            return axios.post(backendUrl + 'link/delete', {
                 id: this.sessionData.id,
                 pass: this.sessionData.pass,
                 linkid: linkid
