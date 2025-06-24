@@ -20,8 +20,8 @@ const tables = {
 }
 
 app.use('/*', cors({
-    origin: ['https://apps.arxalex.com', 'https://apps2.arxalex.com'],
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE']
+    origin: ['https://apps.arxalex.com'],
+    allowMethods: ['GET', 'POST']
 }))
 
 app.get('/session', async (c) => {
